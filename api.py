@@ -1,19 +1,21 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from nltk.corpus import wordnet as wn
-import spacy
 import requests
 import google.generativeai as genai
 import json
+import spacy
 import nltk
+import os
 
 # Configuración para la API de Gemini
 genai.configure(api_key="AIzaSyASmi59Kcfpr5c8mrqD9iJ1osmRxAbI00I")
+SPACY_MODEL_PATH = os.path.join(os.getcwd(), "models/spacy/es_core_news_sm")
+NLTK_DATA_PATH = os.path.join(os.getcwd(), "nltk_data")
 
 # Inicializar el modelo spaCy
-nlp = spacy.load("es_core_news_sm")
-nltk.download('wordnet')       # Base de WordNet
-nltk.download('omw-1.4')  # Open Multilingual WordNet
+nlp = spacy.load(SPACY_MODEL_PATH)  # Cargar spaCy desde la carpeta local
+nltk.data.path.append(NLTK_DATA_PATH)  # Agregar nltk_data al path
 
 app = Flask(__name__)
 CORS(app)
