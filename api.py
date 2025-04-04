@@ -236,8 +236,8 @@ def home():
 
 @app.route("/indexing/<index>", methods=["POST"])
 def indexing(index):
-    api_key = request.headers.get("API-Key")
-    if api_key != "1234":
+    api_key = request.headers.get("key")
+    if api_key != "2025":
         return jsonify({"error": "Clave API incorrecta"}), 403
 
     # Crear el índice si no existe
