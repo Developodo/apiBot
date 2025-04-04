@@ -170,7 +170,7 @@
 
     async function loadIndices() {
       try {
-        const response = await fetch("http://127.0.0.1:5000/indices", { method: "GET" });
+        const response = await fetch("https://apibot-15w5.onrender.com/indices", { method: "GET" });
         if (!response.ok) {
           console.error("Error al cargar los índices");
           return;
@@ -216,7 +216,7 @@
       }
       resultsDiv.innerHTML = '<div class="loader"></div><p style="text-align:center;">Procesando consulta...</p>';
       try {
-        const response = await fetch("http://127.0.0.1:5000/search", {
+        const response = await fetch("https://apibot-15w5.onrender.com/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ query, indices: selectedIndices }),
