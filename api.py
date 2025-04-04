@@ -103,8 +103,8 @@ def get_indices(host, user, password):
 # Procesar consulta con spaCy
 def preprocess_query_with_spacy(query):
     doc = nlp(query)
-    keywords = [token.text for token in doc if token.pos_ in ["NOUN", "VERB", "ADJ", "ADV", "PROPN"]]
-    
+    #keywords = [token.text for token in doc if token.pos_ in ["NOUN", "VERB", "ADJ", "ADV", "PROPN"]]
+    keywords = [token.text for token in doc if token.pos_ in ["NOUN", "VERB", "ADJ"]]
     original_tokens = query.split()
     for token in original_tokens:
         if token not in keywords:
