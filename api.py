@@ -10,7 +10,7 @@ import os
 
 # Configuración para la API de Gemini
 genai.configure(api_key="AIzaSyASmi59Kcfpr5c8mrqD9iJ1osmRxAbI00I")
-SPACY_MODEL_PATH = os.path.join(os.getcwd(), "models/spacy/es_core_news_sm")
+SPACY_MODEL_PATH = os.path.join(os.getcwd(), "es_core_news_sm/es_core_news_sm-3.8.0")
 NLTK_DATA_PATH = os.path.join(os.getcwd(), "nltk_data")
 
 # Inicializar el modelo spaCy
@@ -230,7 +230,7 @@ def search():
         "results": documents,
         "gemini_response": gemini_response
     })
-    
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Usa el puerto que le asigna Render, por defecto 5000 si no se encuentra
     app.run(host="0.0.0.0", port=port)
