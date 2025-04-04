@@ -4,3 +4,4 @@ requests
 nltk
 spacy
 google-generativeai
+.
