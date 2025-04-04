@@ -1,6 +1,7 @@
 flask
 flask-cors
-requests
 nltk
 spacy
+requests
 google-generativeai
+gunicorn

@@ -230,5 +230,9 @@ def search():
         "results": documents,
         "gemini_response": gemini_response
     })
+    
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))  # Usa el puerto que le asigna Render, por defecto 5000 si no se encuentra
+    app.run(host="0.0.0.0", port=port)
 
 handler = app
