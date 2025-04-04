@@ -21,11 +21,11 @@ app = Flask(__name__)
 CORS(app)
 
 # Función para indexar datos en Elasticsearch
-def index_to_elasticsearch(data, index):
-    url = f"{ELASTICSEARCH_URL}/{index}/_doc"
+def index_to_elasticsearch(data, index, host, user, password):
+    url = f"{host}/{index}/_doc"
     try:
         response = requests.post(
-            url, json=data, auth=(ELASTICSEARCH_USER, ELASTICSEARCH_PASSWORD), verify=False
+            url, json=data, auth=(user, password), verify=False
         )
         if response.status_code == 201:
             print(f"Indexado exitoso en {index}: {response.json()}")
@@ -38,27 +38,27 @@ def index_to_elasticsearch(data, index):
         return False
 
 # Función para crear un índice si no existe
-def create_index_if_not_exists(index):
+def create_index_if_not_exists(index, host, user, password):
     print(f"Creando índice '{index}' en Elasticsearch...")
-    url = f"{ELASTICSEARCH_URL}/{index}"
-    
     # Verificar si el índice existe
-    response = requests.get(url, auth=(ELASTICSEARCH_USER, ELASTICSEARCH_PASSWORD), verify=False)
+    indices = get_indices(host, user, password)
     
-    if response.status_code == 404:  # Si el índice no existe, créalo
+    if index not in indices:  # Si el índice no existe, créalo
+        url = f"{host}/{index}"
         payload = {
             "settings": {
                 "number_of_shards": 1,
                 "number_of_replicas": 1
             }
         }
-        response = requests.put(url, json=payload, auth=(ELASTICSEARCH_USER, ELASTICSEARCH_PASSWORD), verify=False)
+        response = requests.put(url, json=payload, auth=(user, password), verify=False)
         if response.status_code in [200, 201]:
             print(f"Índice '{index}' creado exitosamente.")
         else:
             print(f"Error al crear el índice: {response.json()}")
     else:
         print(f"Índice '{index}' ya existe.")
+
 
 # Función para conectar a Elasticsearch usando peticiones directas
 def connect_to_elasticsearch(host, user, password):
