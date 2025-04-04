@@ -20,7 +20,7 @@ nltk.data.path.append(NLTK_DATA_PATH)  # Agregar nltk_data al path
 app = Flask(__name__)
 CORS(app)
 
-# Función para indexar datos en Elasticsearch
+# Función para indexar datos en Elasticsearch.
 def index_to_elasticsearch(data, index, host, user, password):
     url = f"{host}/{index}/_doc"
     try:
