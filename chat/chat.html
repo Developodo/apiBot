@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ETPOEP ChatBOT</title>
+  <style>
+    /* Estilos generales */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #eef2f3;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      height: 90vh;
+    }
+    /* Título moderno y colorido */
+    h1 {
+      text-align: center;
+      font-size: 2.5em;
+      margin-bottom: 20px;
+      background: linear-gradient(45deg, #007BFF, #00C6FF);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    /* Estilos para el formulario */
+    .form-group {
+      margin-bottom: 20px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 16px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    /* Estilos para resultados y acordeones */
+    .results {
+      margin-top: 20px;
+    }
+    .theme-group {
+      margin-bottom: 20px;
+    }
+    .theme-group h3 {
+      background-color: #007BFF;
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    .accordion {
+      margin-bottom: 10px;
+      cursor: pointer;
+      background-color: #007BFF;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      text-align: left;
+      font-size: 16px;
+      outline: none;
+    }
+    .accordion.active {
+      background-color: #0056b3;
+    }
+    .panel {
+      display: none;
+      background-color: #f9f9f9;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .panel.open {
+      display: block;
+    }
+    .error {
+      color: red;
+    }
+    /* Spinner para "procesando consulta" */
+    .loader {
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #007BFF;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    /* Estilos para la respuesta generada por Gemini */
+    .gemini-response {
+      background-color: #ffffff;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 16px;
+      margin-top: 10px;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+    .gemini-response pre {
+      margin: 0;
+      font-family: Consolas, monospace;
+      white-space: pre-wrap;
+    }
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      scroll-behavior: smooth;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>ETPOEP ChatBOT</h1>
+    <p>Introduce tu consulta en el campo de abajo, selecciona los índices y presiona "Buscar".</p>
+
+    <!-- Formulario -->
+    <div class="form-group">
+      <!-- Acordeón para los índices -->
+      <button class="accordion">Índices</button>
+      <div class="panel" id="index-options">
+        <!-- Opciones de índices serán cargadas dinámicamente -->
+      </div>
+    </div>
+
+    <div class="form-group">
+      <input type="text" id="query" placeholder="Escribe tu consulta aquí..." />
+    </div>
+    <div class="form-group">
+      <button onclick="search()">Buscar</button>
+    </div>
+
+    <div class="chat-container" id="results"></div>
+  </div>
+
+  <script>
+    let lastGeminiResponse = '';
+
+    async function loadIndices() {
+      try {
+        const response = await fetch("http://127.0.0.1:5000/indices", { method: "GET" });
+        if (!response.ok) {
+          console.error("Error al cargar los índices");
+          return;
+        }
+        const data = await response.json();
+        const indices = data.indices;
+        if (!Array.isArray(indices)) {
+          console.error("La respuesta no contiene un array válido de índices:", data);
+          return;
+        }
+        const container = document.getElementById("index-options");
+        indices.forEach(index => {
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.id = index;
+          checkbox.value = index;
+          checkbox.checked = true;
+          const label = document.createElement("label");
+          label.htmlFor = index;
+          label.innerText = index;
+          container.appendChild(checkbox);
+          container.appendChild(label);
+          container.appendChild(document.createElement("br"));
+        });
+      } catch (error) {
+        console.error("Error al cargar los índices: ", error);
+      }
+    }
+
+    async function search() {
+      const resultsDiv = document.getElementById("results");
+      resultsDiv.innerHTML = "";
+      const query = document.getElementById("query").value.trim();
+      if (!query) {
+        resultsDiv.innerHTML = "<p class='error'>Por favor, introduce una consulta.</p>";
+        return;
+      }
+      const selectedIndices = Array.from(document.querySelectorAll("#index-options input:checked"))
+          .map(checkbox => checkbox.value);
+      if (selectedIndices.length === 0) {
+        resultsDiv.innerHTML = "<p class='error'>Por favor, selecciona al menos un índice.</p>";
+        return;
+      }
+      resultsDiv.innerHTML = '<div class="loader"></div><p style="text-align:center;">Procesando consulta...</p>';
+      try {
+        const response = await fetch("http://127.0.0.1:5000/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query, indices: selectedIndices }),
+        });
+        if (!response.ok) {
+          const errorMessage = await response.text();
+          resultsDiv.innerHTML = `<p class='error'>Error: ${errorMessage}</p>`;
+          return;
+        }
+        const data = await response.json();
+        resultsDiv.innerHTML = `<h3>Consulta Procesada: ${data.processed_query?data.processed_query:"Sin respuesta"}</h3>`;
+        if (data.results && data.results.length > 0) {
+          const groupedResults = {};
+          data.results.forEach(result => {
+            const tema = result.tema || "Sin tema";
+            if (!groupedResults[tema]) {
+              groupedResults[tema] = [];
+            }
+            groupedResults[tema].push(result);
+          });
+          let resultsHtml = `<button class="accordion">Documentos</button><div class="panel">`;
+          Object.keys(groupedResults).forEach(tema => {
+            resultsHtml += `<div class="theme-group"><h3>${tema}</h3>`;
+            groupedResults[tema].forEach((result, index) => {
+              resultsHtml += ` 
+                <button class="accordion">Apartado: ${result.apartado || "Sin apartado"}</button>
+                <div class="panel">
+                  <p><strong>ID:</strong> ${result.id}</p>
+                  <p><strong>Normativa:</strong> ${result.normativa}</p>
+                  <p><strong>Tipo:</strong> ${result.tipo}</p>
+                  <p><strong>Tema:</strong> ${result.tema || "Sin tema"}</p>
+                  <p><strong>Apartado:</strong> ${result.apartado || "Sin apartado"}</p>
+                  <p><strong>Puntaje:</strong> ${result.score}</p>
+                  <p><strong>Contenido:</strong> ${result.content}</p>
+                </div>`;
+            });
+            resultsHtml += "</div>";
+          });
+          resultsHtml += "</div>";  // Cierra el acordeón de Documentos
+          resultsDiv.innerHTML += resultsHtml;
+        } else {
+          resultsDiv.innerHTML += "<p>No se encontraron documentos relevantes.</p>";
+        }
+
+        if (data.gemini_response) {
+          lastGeminiResponse = data.gemini_response.trim();
+          let geminiText = lastGeminiResponse.replace(/^```html\s*/i, '').replace(/\s*```$/, '').trim();
+          geminiText = geminiText.split('\n')
+            .map(line => line.trim())
+            .filter(line => line !== "")
+            .join('\n');
+          resultsDiv.innerHTML += `<h3>Respuesta Generada:</h3>
+            <div class="panel open gemini-response">
+              <pre>${geminiText}</pre>
+            </div>`;
+        }
+
+        const accordions = document.querySelectorAll(".accordion");
+        accordions.forEach(accordion => {
+          accordion.addEventListener("click", function () {
+            this.classList.toggle("active");
+            const panel = this.nextElementSibling;
+            panel.classList.toggle("open");
+          });
+        });
+
+        // Desplazamiento hacia el principio de la respuesta y luego suavemente hasta el final
+        const geminiResponseDiv = document.querySelector('.gemini-response');
+        if(geminiResponseDiv)
+            geminiResponseDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // Scroll suavemente hasta el final para seguir con la conversación
+        setTimeout(() => {
+          resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }, 300);
+      } catch (error) {
+        resultsDiv.innerHTML = `<p class='error'>Ocurrió un error: ${error.message}</p>`;
+      }
+    }
+
+    // Escuchar evento Enter en el campo de texto
+    document.getElementById("query").addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        search();
+      }
+    });
+
+    document.addEventListener("DOMContentLoaded", loadIndices);
+  </script>
+</body>
+</html>

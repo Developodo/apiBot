@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indexador NEAE</title>
+    <style>
+        .success-message {
+            color: green;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .error-message {
+            color: red;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Indexador de Normativas en Elasticsearch</h1>
+
+    <!-- Mensajes de resultado -->
+    {% if success %}
+    <p class="success-message">Guardado correctamente e indexado en Elasticsearch.</p>
+    {% endif %}
+    {% if elastic_error %}
+    <p class="error-message">Error conectando a Elasticsearch. Por favor, verifica la conexión.</p>
+    {% endif %}
+
+    <form action="/" method="POST">
+        <label for="normativa">Normativa:</label><br>
+        <textarea name="normativa" id="normativa" rows="4" cols="50" required>{{ request.form.get('normativa', '') }}</textarea><br><br>
+
+        <label for="tipo">Tipo:</label><br>
+        <input type="text" id="tipo" name="tipo" required value="{{ request.form.get('tipo', '') }}"><br><br>
+
+        <label for="fecha">Fecha:</label><br>
+        <input type="date" id="fecha" name="fecha" required value="{{ request.form.get('fecha', '') }}"><br><br>
+
+        <label for="tema">Tema:</label><br>
+        <input type="text" id="tema" name="tema" required value="{{ request.form.get('tema', '') }}"><br><br>
+
+        <label for="apartado">Apartado:</label><br>
+        <input type="text" id="apartado" name="apartado" required value="{{ request.form.get('apartado', '') }}"><br><br>
+
+        <label for="contenido">Contenido:</label><br>
+        <textarea name="contenido" id="contenido" rows="6" cols="50" required></textarea><br><br>
+
+        <label for="indice">Índice de Elasticsearch:</label><br>
+        <input type="text" id="indice" name="indice" required value="{{ request.form.get('indice', '') }}"><br><br>
+
+        <button type="submit">Guardar e Indexar</button>
+    </form>
+</body>
+</html>
