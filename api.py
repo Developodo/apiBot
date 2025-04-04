@@ -241,7 +241,7 @@ def indexing(index):
         return jsonify({"error": "Clave API incorrecta"}), 403
 
     # Crear el índice si no existe
-    create_index_if_not_exists(index)
+    create_index_if_not_exists(index,host,user,password)
 
     # Obtener los datos del cuerpo de la solicitud (JSON)
     data = request.json
@@ -249,7 +249,7 @@ def indexing(index):
         return jsonify({"error": "Debe proporcionar datos en el cuerpo de la solicitud"}), 400
 
     # Indexar los datos en Elasticsearch
-    success = index_to_elasticsearch(data, index)
+    success = index_to_elasticsearch(data, index,host,user,password)
     if success:
         return jsonify({"message": f"Datos indexados exitosamente en el índice '{index}'"}), 201
     else:
