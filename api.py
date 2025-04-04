@@ -20,6 +20,46 @@ nltk.data.path.append(NLTK_DATA_PATH)  # Agregar nltk_data al path
 app = Flask(__name__)
 CORS(app)
 
+# Función para indexar datos en Elasticsearch
+def index_to_elasticsearch(data, index):
+    url = f"{ELASTICSEARCH_URL}/{index}/_doc"
+    try:
+        response = requests.post(
+            url, json=data, auth=(ELASTICSEARCH_USER, ELASTICSEARCH_PASSWORD), verify=False
+        )
+        if response.status_code == 201:
+            print(f"Indexado exitoso en {index}: {response.json()}")
+            return True
+        else:
+            print(f"Error al indexar en Elasticsearch: {response.json()}")
+            return False
+    except Exception as e:
+        print(f"Error al indexar en Elasticsearch: {e}")
+        return False
+
+# Función para crear un índice si no existe
+def create_index_if_not_exists(index):
+    print(f"Creando índice '{index}' en Elasticsearch...")
+    url = f"{ELASTICSEARCH_URL}/{index}"
+    
+    # Verificar si el índice existe
+    response = requests.get(url, auth=(ELASTICSEARCH_USER, ELASTICSEARCH_PASSWORD), verify=False)
+    
+    if response.status_code == 404:  # Si el índice no existe, créalo
+        payload = {
+            "settings": {
+                "number_of_shards": 1,
+                "number_of_replicas": 1
+            }
+        }
+        response = requests.put(url, json=payload, auth=(ELASTICSEARCH_USER, ELASTICSEARCH_PASSWORD), verify=False)
+        if response.status_code in [200, 201]:
+            print(f"Índice '{index}' creado exitosamente.")
+        else:
+            print(f"Error al crear el índice: {response.json()}")
+    else:
+        print(f"Índice '{index}' ya existe.")
+
 # Función para conectar a Elasticsearch usando peticiones directas
 def connect_to_elasticsearch(host, user, password):
     try:
@@ -193,6 +233,27 @@ es = connect_to_elasticsearch(host, user, password)
 @app.route("/")
 def home():
     return jsonify({"message": "Bienvenido a la API de búsqueda. Usa el endpoint /search para realizar consultas."})
+
+@app.route("/indexing/<index>", methods=["POST"])
+def indexing(index):
+    api_key = request.headers.get("API-Key")
+    if api_key != "1234":
+        return jsonify({"error": "Clave API incorrecta"}), 403
+
+    # Crear el índice si no existe
+    create_index_if_not_exists(index)
+
+    # Obtener los datos del cuerpo de la solicitud (JSON)
+    data = request.json
+    if not data:
+        return jsonify({"error": "Debe proporcionar datos en el cuerpo de la solicitud"}), 400
+
+    # Indexar los datos en Elasticsearch
+    success = index_to_elasticsearch(data, index)
+    if success:
+        return jsonify({"message": f"Datos indexados exitosamente en el índice '{index}'"}), 201
+    else:
+        return jsonify({"error": "Error al indexar los datos"}), 500
 
 @app.route("/indices", methods=["GET"])
 def indices():
